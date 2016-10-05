@@ -1,18 +1,25 @@
-## SIG - Localiza
+## backend - Localiza
 
 
 ### Instalar y configurar Node.js
 
 
-
+```
 npm install angular-cookies angular-message-format angular-messages --save-dev
 npm install angular-parse-ext angular-resource --save-dev
 npm install body-parser --save-dev
 npm install cookie-parser --save-dev
 npm install debug --save-dev
 npm install express --save-dev
+npm install jade json2csv konfig --save-dev
+npm install jquery --save-dev
+npm install jquery-ui --save-dev
+npm install lz-string morgan pg static-favicon stylus --save-dev
+```
 
+Opcionales
 
+```
 npm install grunt-cli
 npm install grunt-cli
 npm install grunt-contrib-clean --save-dev
@@ -27,22 +34,19 @@ npm install angular-leaflet-directive --dave-dev
 npm install angular-material angular-material-icons --dave-dev
 npm install angular-route --dave-dev
 npm install angular-sanitize angular-touch --save-dev
-npm install jade json2csv konfig --save-dev
-npm install lz-string morgan pg static-favicon stylus --save-dev
 npm install font-awesome --save-dev
 npm install ng-csv json-export-excel --save-dev
-npm install jquery --save-dev
-npm install jquery-ui --save-dev
 npm install openlayers3 --save-dev
 npm install openlayers --save-dev
 npm install angular-openlayers --save-dev
 npm install leaflet --save-dev
 npm install d3 --save-dev
+```
 
 ### Instalar  y configurar PostgreSQL
 
 
-sudo aptitude install postgresql-9.4 postgresql-9.4-postgis-2.1
+`sudo aptitude install postgresql-9.4 postgresql-9.4-postgis-2.1`
 
 
 ### Instalar y configurar nginx
@@ -51,14 +55,14 @@ Fuente:
 [a](https://www.howtoforge.com/tutorial/installing-nginx-with-php-fpm-and-mariadb-lemp-on-debian-jessie/)
 [b](https://support.rackspace.com/how-to/install-nginx-and-php-fpm-running-on-unix-file-sockets/)
 
-
+```
 sudo aptitude install nginx
 
 sudo aptitude install php5-common php5-cli php5-fpm php5-pgsql
 
 sudo aptitude install php5-pgsql
 sudo aptitude install php5-common
-
+```
 
 Editar el archivo `sudo nano /etc/nginx/sites-enabled/default`
 
@@ -89,11 +93,13 @@ Editar el archivo `sudo nano /etc/nginx/sites-enabled/default`
                 proxy_set_header x-webobjects-server-url $scheme://$host;
         }
 ```
-sudo service nginx restart
+
+`sudo service nginx restart`
 
 ### Instalar e iniciar forever
 
-sudo npm install forever --global
+`sudo npm install forever --global`
+
 
 ```
 #!/bin/bash
