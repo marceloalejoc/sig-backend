@@ -1,0 +1,18 @@
+development:
+    cache_assets: false
+    db:
+      user: 'localiza'
+      password: 'localiza'
+      database: 'localiza'
+      host: 'localhost'
+      port: 5432
+
+production":
+    port: #{process.env.PORT}
+    secret_key: '3F8RRJR30UHERGUH8UERHGIUERHG3987GH8'
+    db:
+      user: 'localiza'
+      password: 'localiza'
+      database: 'localiza'
+      host: 'localhost'
+      port: 5432

@@ -1,0 +1,17 @@
+
+html,
+body {
+  background: #eee;
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  background-color: #fff;
+  height: 100%;
+  width: 768px;
+  margin: 0 auto;
+  overflow: auto;
+}
