@@ -5,8 +5,6 @@
 
 
 ```
-npm install angular-cookies angular-message-format angular-messages --save-dev
-npm install angular-parse-ext angular-resource --save-dev
 npm install body-parser --save-dev
 npm install cookie-parser --save-dev
 npm install debug --save-dev
@@ -34,6 +32,9 @@ npm install angular-leaflet-directive --dave-dev
 npm install angular-material angular-material-icons --dave-dev
 npm install angular-route --dave-dev
 npm install angular-sanitize angular-touch --save-dev
+npm install angular-cookies angular-message-format angular-messages --save-dev
+npm install angular-parse-ext angular-resource --save-dev
+
 npm install font-awesome --save-dev
 npm install ng-csv json-export-excel --save-dev
 npm install openlayers3 --save-dev
