@@ -34,7 +34,7 @@ var usuario = function(req, res) {
         row = result.rows[0];
         query2 = "INSERT INTO ubicacion "
                + "(id_usuario, lat, lng, fecha, hora) "
-               + "VALUES ('"+ row.id_usuario +"', '"+ req.body.latlng[0] +"', '"+ req.body.latlng[1] +"', NOW(), NOW() ) ";
+               + "VALUES ('"+ row.id_usuario +"', '"+ req.body.latlng[0] +"', '"+ req.body.latlng[1] +"', TO_CHAR(NOW(),'YYYY-MM-DD')::DATE, TO_CHAR(NOW(),'HH24:MI:SS')::TIME ) ";
         query2 = client2.query(query2, function(err,result){
           if(err) {
             console.error('INSERT2', err);
@@ -44,7 +44,7 @@ var usuario = function(req, res) {
         });
 
         query2 = "UPDATE usuarios "
-               + "SET lat='"+req.body.latlng[0]+"', lng='"+req.body.latlng[1]+"' "//", fecha, hora "
+               + "SET lat='"+req.body.latlng[0]+"', lng='"+req.body.latlng[1]+"', fecha=TO_CHAR(NOW(),'YYYY-MM-DD')::DATE, hora=TO_CHAR(NOW(),'HH24:MI:SS')::TIME "//", fecha, hora "
                + "WHERE  id_usuario="+ row.id_usuario + " ";
         query2 = client2.query(query2, function(err,result){
           if(err) {
@@ -141,14 +141,14 @@ var postUbicacion = function(req, res) {
         client.end(function (err) { if (err) throw err; }); // disconnect the client
         console.error('SELECT', err);
         row = null;
-        res.json({'error':'Error SQL'});
+        res.json({'error':502});
       } else {
         row = result.rows[0];
         //console.log('PRUEBA',row, req.body, req.params);
         if(row) {
           query2 = "INSERT INTO ubicacion "
                  + "(id_usuario, lat, lng, fecha, hora) "
-                 + "VALUES ('"+ row.id_usuario +"', '"+ req.body.latlng[0] +"', '"+ req.body.latlng[1] +"', NOW(), NOW() ) ";
+                 + "VALUES ('"+ row.id_usuario +"', '"+ req.body.latlng[0] +"', '"+ req.body.latlng[1] +"', TO_CHAR(NOW(),'YYYY-MM-DD')::DATE, TO_CHAR(NOW(),'HH24:MI:SS')::TIME ) ";
           query2 = client.query(query2, function(err,result){
             if(err) {
               console.error('INSERT2', err);
@@ -160,7 +160,7 @@ var postUbicacion = function(req, res) {
           });
 
           query3 = "UPDATE usuarios "
-                 + "SET lat='"+req.body.latlng[0]+"', lng='"+req.body.latlng[1]+"' "//", fecha, hora "
+                 + "SET lat='"+req.body.latlng[0]+"', lng='"+req.body.latlng[1]+"', fecha=TO_CHAR(NOW(),'YYYY-MM-DD')::DATE, hora=TO_CHAR(NOW(),'HH24:MI:SS')::TIME " //", fecha, hora "
                  + "WHERE  id_usuario="+ row.id_usuario + " ";
           query3 = client.query(query3, function(err,result){
             if(err) {
@@ -171,11 +171,12 @@ var postUbicacion = function(req, res) {
               client.end(function (err) { if (err) throw err; }); // disconnect the client
             }
           });
+          res.json({'status':'200'});
 
         } else {
           client.end(function (err) { if (err) throw err; }); // disconnect the client
+          res.json({'status':'500'});
         }
-        res.json({'status':'OK'});
 
       }
     }); // query
@@ -184,6 +185,10 @@ var postUbicacion = function(req, res) {
 
   }
 
+  if( !(req.body && req.body.latlng[0]&&req.body.latlng[1]) ){
+    res.set('content-type','application/json; charset=UTF-8');
+    res.json({'status':'501'});
+  }
   postUbicacion_json(req, res);
 }
 
