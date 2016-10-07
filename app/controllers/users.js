@@ -9,7 +9,7 @@ var list = function(req, res) {
     client.on('drain', client.end.bind(client)); //disconnect client when all queries are finished
     client.connect();
 
-    query = "SELECT usuario,nombre,ap_paterno,ap_materno,lat,lng,img, id_dispositivo "
+    query = "SELECT id_usuario+1983 id_usuario, usuario,nombre,ap_paterno,ap_materno,lat,lng,img, id_dispositivo "
           + "FROM usuarios "
           + "WHERE lat IS NOT NULL AND lng IS NOT NULL ";
     query = client.query(query, function(err, result){
@@ -34,7 +34,13 @@ var info = function(req, res) {
     client.on('drain', client.end.bind(client)); //disconnect client when all queries are finished
     client.connect();
 
-    query = "SELECT nombre,ap_paterno,ap_materno FROM usuarios WHERE usuario='" + req.params.usuario + "'";
+    query = "SELECT usuario,nombre,ap_paterno,ap_materno, img,email,descripcion, dia,mes,ano,siglas,empresa "
+          + ",SUBSTRING(fecha::VARCHAR,0,11) fecha, SUBSTRING(hora::VARCHAR,0,9) hora  "
+          + "FROM usuarios "
+          + "WHERE usuario='" + req.params.user + "' ";
+    if(req.body.user.id_usuario) {
+      query += " AND id_usuario+1983='"+req.body.user.id_usuario+"' ";
+    }
     query = client.query(query, function(err, result){
       res.set('content-type', 'application/json; charset=UTF-8');
       if(err) {
@@ -42,7 +48,17 @@ var info = function(req, res) {
         res.json({'error':'Error en los parametros'});
       } else {
         console.log('Usuario info respuesta en formato JSON');
-        res.json(result.rows);
+        var row = result.rows[0];
+        if(row && row.usuario) {
+          console.log('HORA:',row.fecha);
+          row.status = '200';
+          res.json(row);
+        } else {
+          row = {
+            status: '403'
+          };
+          res.json(row);
+        }
       }
     });
   }
