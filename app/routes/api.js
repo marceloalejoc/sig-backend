@@ -8,14 +8,15 @@ var router = express.Router();
 /* USUARIOS */
 /* GET /api/v1/usuarios */
 router.get('/users', users.list);
-/* POST /api/v1/usuarios/login/:usuario */
+/* POST /api/v1/usuarios/login/:user */
 // data: usuario, email, latlng, iddisp
 router.post('/users/login/:user', users.login);
-/* POST /api/v1/usuarios/login/:usuario */
+/* POST /api/v1/usuarios/login/:user */
 // data: usuario, email, latlng, iddisp
 router.post('/users/register/:user', users.register);
-/* GET /api/v1/usuarios/:usuario/info */
-router.get('/users/:user/info', users.info);
+/* POST /api/v1/usuarios/:user/info */
+router.post('/users/:user/info', users.info);
+//router.post('/users/:user/info/:id', users.infoId);
 
 
 /* UBICACION */
@@ -28,9 +29,10 @@ router.post('/ubicacion/:usuario',ubicacion.postUbicacion);
 
 
 /* MENSAJE */
-/* POST /api/v1/mensaje/:usuario/:lat/:lng/:texto */
+/* GET /api/v1/mensaje/:usuario */
 router.get('/mensaje/:usuario',mensajes.recibir);
-/* POST /api/v1/mensaje/:usuario */
+router.post('/mensaje/',mensajes.recibirUser);
+/* POST /api/v1/mensaje/:usuario/:lat/:lng/:texto */
 // data: usuario1, usuario2, latlng, idmobile, texto
 router.post('/mensaje/:usuario',mensajes.enviar);
 //router.put('/mensaje/:usuario',mensajes.enviar);
