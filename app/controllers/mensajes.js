@@ -34,12 +34,12 @@ var enviar = function(req, res) {
           query2 = "INSERT INTO mensajes "
                  + "(id_usuario1, id_usuario2, lat, lng, fecha, hora, mensaje) "
                  + "VALUES ("+ req.body.id1 +", '"+ req.body.id2 +"', '"+ req.body.latlng[0] +"', '"+ req.body.latlng[1] +"', TO_CHAR(NOW(),'YYYY-MM-DD')::DATE, TO_CHAR(NOW(),'HH24:MI:SS')::TIME, '"+ req.body.texto +"' ) "
-                 + "RETURNING id_mensaje, fecha, hora ";
+                 + "RETURNING id_mensaje+1983, SUBSTRING(fecha::VARCHAR,1,10) fecha, SUBSTRING(hora::VARCHAR,1,8) hora ";
         } else {
           query2 = "INSERT INTO mensajes "
                  + "(id_usuario1, lat, lng, fecha, hora, mensaje) "
                  + "VALUES ("+ req.body.id1 +", '"+ req.body.latlng[0] +"', '"+ req.body.latlng[1] +"', TO_CHAR(NOW(),'YYYY-MM-DD')::DATE, TO_CHAR(NOW(),'HH24:MI:SS')::TIME, '"+ req.body.texto +"' ) "
-                 + "RETURNING id_mensaje, fecha, hora ";
+                 + "RETURNING id_mensaje+1983, SUBSTRING(fecha::VARCHAR,1,10) fecha, SUBSTRING(hora::VARCHAR,1,8) hora ";
         }
         query2 = client2.query(query2, function(err,result){
           if(err) {
@@ -63,7 +63,8 @@ var enviar = function(req, res) {
   if(!req.body.id1) {
     res.set('content-type','application/json; charset=UTF-8');
     console.log('Error en peticion de datos');
-    res.json('status','400');
+    res.json({'status':'400'});
+    return;
   }
   req.body.id1 -= 1983;
   if(req.body.id2) {
@@ -97,7 +98,7 @@ var recibir = function(req, res) {
         res.json({'status':'500'});
       } else {
         row = result.rows[0];
-        query2 = "SELECT me.id_usuario1, me.id_usuario2, me.lat, me.lng, me.fecha, me.hora, me.mensaje "
+        query2 = "SELECT me.id_usuario1+1983 id_usuario1, me.id_usuario2+1983 id_usuario2, me.lat, me.lng, me.fecha, me.hora, me.mensaje "
                + "       ,us1.usuario usuario1 "
                + "       ,us2.usuario usuario2 "
                + "FROM mensajes me "
@@ -148,22 +149,23 @@ var recibirUser = function(req, res) {
         row = null;
         res.json({'status':'500'});
       } else {
-        console.log('BODY:: ',req.body);
+        //console.log('BODY:: ',req.body);
         row = result.rows[0];
-        query2 = "SELECT me.id_usuario1, me.id_usuario2, me.lat, me.lng, me.fecha, me.hora, me.mensaje "
+        query2 = "SELECT me.id_usuario1, me.id_usuario2, me.lat, me.lng, SUBSTRING(me.fecha::VARCHAR,1,10) fecha, SUBSTRING(me.hora::VARCHAR,1,8) hora, me.mensaje "
                + "       ,us1.usuario usuario1 "
                + "       ,us2.usuario usuario2 "
                + "FROM mensajes me "
                + "JOIN usuarios us1 ON us1.id_usuario=me.id_usuario1 "
                + "LEFT JOIN usuarios us2 ON us2.id_usuario=me.id_usuario2 "
+               + "WHERE (me.fecha||' '||me.hora)>('"+req.body.fecha+"'||' '||'"+req.body.hora+"') "
         if(req.body.seguir && req.body.seguir.user && req.body.seguir.user.usuario) {
-          query2 +=" WHERE (us1.usuario='"+ req.body.usuario +"' AND us2.usuario='"+ req.body.seguir.user.usuario +"') "
-               + "   OR (us1.usuario='"+ req.body.seguir.user.usuario +"' AND us2.usuario='"+ req.body.usuario +"') ";
+          query2 +=" AND ((us1.usuario='"+ req.body.usuario +"' AND us2.usuario='"+ req.body.seguir.user.usuario +"') "
+               + "     OR (us1.usuario='"+ req.body.seguir.user.usuario +"' AND us2.usuario='"+ req.body.usuario +"')) ";
         } else {
-          query2 +=" WHERE ( us2.usuario IS NULL ) "
+          query2 +=" AND ( us2.usuario IS NULL ) "
         }
         query2 +=" ORDER BY fecha,hora "
-        //console.log( (!!req.body.seguir.user) ,'SQL: ',query2);
+        //console.log( 'SQL: ',query2);
         query2 = client.query(query2, function(err,result){
           if(err) {
             client.end(function (err) { if (err) throw err; }); // disconnect the client

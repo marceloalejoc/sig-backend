@@ -134,7 +134,7 @@ var postUbicacion = function(req, res) {
     query = "SELECT id_usuario, usuario, nombre, ap_paterno, ap_materno "
           + "FROM usuarios "
           + "WHERE usuario='"+ req.params.usuario +"' "
-          + "  AND id_dispositivo = '"+req.body.iddisp+"' ";
+          + "  AND MD5(id_dispositivo) = '"+req.body.iddisp+"' ";
     query = client.query(query, function(err, result){
       res.set('content-type','application/json; charset=UTF-8');
       if(err) {
