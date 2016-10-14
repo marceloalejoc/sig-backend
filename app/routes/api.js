@@ -2,6 +2,8 @@ var express = require('express');
 var users = require('../controllers/users');
 var ubicacion = require('../controllers/ubicacion');
 var mensajes = require('../controllers/mensajes');
+var pedidos = require('../controllers/pedidos');
+var products = require('../controllers/products');
 
 var router = express.Router();
 
@@ -42,6 +44,17 @@ router.post('/mensaje/:usuario',mensajes.enviar);
 //router.post('/mensaje/',mensajes.enviar);
 //router.put('/mensaje/',mensajes.enviar);
 //router.delete('/mensaje/',mensajes.enviar);
+
+router.get('/pedidos/:user/:userid',pedidos.list);
+router.post('/pedidos/:user',pedidos.add);
+router.delete('/pedidos/:user/:pedid',pedidos.cancel);
+
+router.get('/products/:user/:userid',products.list);
+router.get('/products/:user/prod/:prodid',products.info);
+router.post('/products/:user',products.add);
+router.put('/products/:user/:prodid',products.modif);
+router.delete('/products/:user/:prodid',products.delete);
+
 
 
 
