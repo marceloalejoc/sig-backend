@@ -7,19 +7,12 @@ var query, query2, query3;
 /* GET /api/v1/ubicacion */
 var usuario = function(req, res) {
   var postUbicacion_json = function(req, res) {
-    var row = null;
+    var row1 = null;
+    var row2 = null;
 
     client = new pg.Client(config.app.db);
     client.on('drain', client.end.bind(client)); //disconnect client when all queries are finished
     client.connect();
-
-    client2 = new pg.Client(config.app.db);
-    client2.on('drain', client2.end.bind(client2)); //disconnect client when all queries are finished
-    client2.connect();
-
-    client3 = new pg.Client(config.app.db);
-    client3.on('drain', client3.end.bind(client3)); //disconnect client when all queries are finished
-    client3.connect();
 
     query = "SELECT id_usuario, usuario, nombre, ap_paterno, ap_materno "
           + "FROM usuarios "
@@ -28,29 +21,26 @@ var usuario = function(req, res) {
       res.set('content-type','application/json; charset=UTF-8');
       if(err) {
         console.error('SELECT', err);
-        row = null;
+        row1 = null;
         res.json({'error':'Error SQL'});
       } else {
-        row = result.rows[0];
+        row1 = result.rows[0];
         query2 = "INSERT INTO ubicacion "
                + "(id_usuario, lat, lng, fecha, hora) "
-               + "VALUES ('"+ row.id_usuario +"', '"+ req.body.latlng[0] +"', '"+ req.body.latlng[1] +"', TO_CHAR(NOW(),'YYYY-MM-DD')::DATE, TO_CHAR(NOW(),'HH24:MI:SS')::TIME ) ";
+               + "VALUES ('"+ row1.id_usuario +"', '"+ req.body.latlng[0] +"', '"+ req.body.latlng[1] +"', TO_CHAR(NOW(),'YYYY-MM-DD')::DATE, TO_CHAR(NOW(),'HH24:MI:SS')::TIME ) "
+               + "RETURNING id_ubicacion ; "
+        query2+= "UPDATE usuarios "
+               + "SET lat='"+req.body.latlng[0]+"', lng='"+req.body.latlng[1]+"', fecha=TO_CHAR(NOW(),'YYYY-MM-DD')::DATE, hora=TO_CHAR(NOW(),'HH24:MI:SS')::TIME "//", fecha, hora "
+               + "WHERE  id_usuario="+ row1.id_usuario + "; "
+               + "RETURNING id_usuario ; "
         query2 = client2.query(query2, function(err,result){
           if(err) {
             console.error('INSERT2', err);
+            res.json({'Error':'500'});
           } else {
             console.log('INSERT OK');
-          }
-        });
-
-        query2 = "UPDATE usuarios "
-               + "SET lat='"+req.body.latlng[0]+"', lng='"+req.body.latlng[1]+"', fecha=TO_CHAR(NOW(),'YYYY-MM-DD')::DATE, hora=TO_CHAR(NOW(),'HH24:MI:SS')::TIME "//", fecha, hora "
-               + "WHERE  id_usuario="+ row.id_usuario + " ";
-        query2 = client2.query(query2, function(err,result){
-          if(err) {
-            console.error('UPDATE 3', err);
-          } else {
-            console.log('UPDATE OK');
+            row2 = result.rows;
+            res.json(row2);
           }
         });
 
@@ -120,16 +110,12 @@ var getUbicacion = function(req, res) {
 /* POST /api/v1/ubicacion/:usuario */
 var postUbicacion = function(req, res) {
   var postUbicacion_json = function(req, res) {
-    var row = null;
+    var row1 = null;
+    var row2 = null;
 
     client = new pg.Client(config.app.db);
     //client.on('drain', client.end.bind(client)); //disconnect client when all queries are finished
     client.connect();
-
-    //client2 = new pg.Client(config.app.db);
-    //client2.on('drain', client2.end.bind(client2)); //disconnect client when all queries are finished
-    //client2.connect();
-
 
     query = "SELECT id_usuario, usuario, nombre, ap_paterno, ap_materno "
           + "FROM usuarios "
@@ -140,48 +126,36 @@ var postUbicacion = function(req, res) {
       if(err) {
         client.end(function (err) { if (err) throw err; }); // disconnect the client
         console.error('SELECT', err);
-        row = null;
-        res.json({'error':502});
+        res.json({'status':500});
       } else {
-        row = result.rows[0];
+        row1 = result.rows[0];
         //console.log('PRUEBA',row, req.body, req.params);
-        if(row) {
+        if(row1) {
           query2 = "INSERT INTO ubicacion "
                  + "(id_usuario, lat, lng, fecha, hora) "
-                 + "VALUES ('"+ row.id_usuario +"', '"+ req.body.latlng[0] +"', '"+ req.body.latlng[1] +"', TO_CHAR(NOW(),'YYYY-MM-DD')::DATE, TO_CHAR(NOW(),'HH24:MI:SS')::TIME ) ";
-          query2 = client.query(query2, function(err,result){
-            if(err) {
-              console.error('INSERT2', err);
-              client.end(function (err) { if (err) throw err; }); // disconnect the client
-            } else {
-              console.log('INSERT2 OK');
-            }
-
-          });
-
-          query3 = "UPDATE usuarios "
+                 + "VALUES ('"+ row1.id_usuario +"', '"+ req.body.latlng[0] +"', '"+ req.body.latlng[1] +"', TO_CHAR(NOW(),'YYYY-MM-DD')::DATE, TO_CHAR(NOW(),'HH24:MI:SS')::TIME ) "
+                 + "RETURNING id_ubicacion; "
+          query2+= "UPDATE usuarios "
                  + "SET lat='"+req.body.latlng[0]+"', lng='"+req.body.latlng[1]+"', fecha=TO_CHAR(NOW(),'YYYY-MM-DD')::DATE, hora=TO_CHAR(NOW(),'HH24:MI:SS')::TIME " //", fecha, hora "
-                 + "WHERE  id_usuario="+ row.id_usuario + " ";
-          query3 = client.query(query3, function(err,result){
+                 + "WHERE  id_usuario="+ row1.id_usuario + " "
+                 + "RETURNING id_usuario; "
+          query2 = client.query(query2, function(err,result){
+            client.end(function (err) { if (err) throw err; }); // disconnect the client
             if(err) {
-              console.error('UPDATE3', err);
-              client.end(function (err) { if (err) throw err; }); // disconnect the client
+              console.error('INSERT2 UPDATE3', err);
+              res.json({'status':'501'});
             } else {
-              console.log('UPDATE3 OK');
-              client.end(function (err) { if (err) throw err; }); // disconnect the client
+              console.log('INSERT2 UPDATE3 OK');
+              res.json({'status':'200'});
             }
           });
-          res.json({'status':'200'});
-
         } else {
           client.end(function (err) { if (err) throw err; }); // disconnect the client
-          res.json({'status':'500'});
+          res.json({'status':'403'});
         }
 
       }
     }); // query
-
-    console.log('Fecha:', Date());
 
   }
 
