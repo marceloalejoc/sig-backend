@@ -9,7 +9,7 @@ var prodList = function(req, res) {
     //client.on('drain', client.end.bind(client)); //disconnect client when all queries are finished
     client.connect();
 
-    query = "SELECT p.id_producto+1983 id_producto, p.codigo,p.nombre,p.detalle, p.precio,p.cantidad "
+    query = "SELECT p.id_producto+1983 id_producto, p.codigo,p.nombre, p.precio,p.cantidad ,p.detalle "
           + ", SUBSTRING(p.fecha::VARCHAR,1,10) fecha, SUBSTRING(p.hora::VARCHAR,1,8) hora "
           + "FROM productos p "
           + "JOIN usuarios u ON u.id_usuario=p.id_usuario "
