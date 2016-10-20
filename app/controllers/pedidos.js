@@ -11,9 +11,41 @@ var pediList = function(req, res) {
 
     query = "SELECT pe.id_pedido+1983 id_pedido, pe.estado,pe.detalle,pe.lat,pe.lng  "
           + ", SUBSTRING(pe.fecha::VARCHAR,1,10) fecha, SUBSTRING(pe.hora::VARCHAR,1,8) hora "
+          + ", us.id_usuario+1983 id_usuario2, us.usuario usuario2 "
+          + "FROM pedidos pe "
+          + "JOIN usuarios us ON us.id_usuario=pe.id_usuario2  "
+          + "WHERE pe.id_usuario1+1983='"+ req.params.userid +"' "
+          + "ORDER BY fecha DESC,hora DESC ";
+    //console.log('BODY',req.body);
+    query = client.query(query, function(err, result){
+      res.set('content-type','application/json; charset=UTF-8');
+      client.end(function (err) { if (err) throw err; }); // disconnect the client
+      if(err) {
+        console.error('Error ejecutando lista: ', err);
+        res.json({'status':'500'});
+      } else {
+        console.log('Pedidos respuesta en formato JSON');
+        res.json(result.rows);
+      }
+    });
+  }
+
+  list_json(req, res);
+}
+
+/* GET /api/v1/pedidos/:user/to/:userid */
+var pediListTo = function(req, res) {
+  var list_json = function(req, res) {
+    client = new pg.Client(config.app.db);
+    //client.on('drain', client.end.bind(client)); //disconnect client when all queries are finished
+    client.connect();
+
+    query = "SELECT pe.id_pedido+1983 id_pedido, pe.estado,pe.detalle,pe.lat,pe.lng  "
+          + ", SUBSTRING(pe.fecha::VARCHAR,1,10) fecha, SUBSTRING(pe.hora::VARCHAR,1,8) hora "
+          + ", us.id_usuario+1983 id_usuario1, us.usuario usuario1 "
           + "FROM pedidos pe "
           + "JOIN usuarios us ON us.id_usuario=pe.id_usuario1  "
-          + "WHERE pe.id_usuario1+1983='"+ req.params.userid +"' "
+          + "WHERE pe.id_usuario2+1983='"+ req.params.userid +"' "
           + "ORDER BY fecha DESC,hora DESC ";
     //console.log('BODY',req.body);
     query = client.query(query, function(err, result){
@@ -80,10 +112,10 @@ var pediInsert =  function(req, res) {
     //client.on('drain', client.end.bind(client)); //disconnect client when all queries are finished
     client.connect();
 
-    var datos = [req.body.id-1983, req.body.pedido.user.id_usuario-1983, req.body.detalle, req.body.lat, req.body.lng];
+    var datos = [req.body.id-1983, req.body.pedido.user.id_usuario-1983, req.body.detalles, req.body.lat, req.body.lng, req.body.nombres,req.body.email,req.body.direccion];
     query = "INSERT INTO pedidos "
-          + "(id_usuario1,id_usuario2,detalle,lat,lng,fecha,hora) "
-          + "VALUES ($1,$2,$3, $4,$5, TO_CHAR(NOW(),'YYYY-MM-DD')::DATE, TO_CHAR(NOW(),'HH24:MI:SS')::TIME) "
+          + "(id_usuario1,id_usuario2,detalle,lat,lng, nombres,email,direccion, fecha,hora) "
+          + "VALUES ($1,$2,$3, $4,$5, $6,$7,$8, TO_CHAR(NOW(),'YYYY-MM-DD')::DATE, TO_CHAR(NOW(),'HH24:MI:SS')::TIME) "
           + "RETURNING id_pedido, SUBSTRING(fecha::VARCHAR,1,10) fecha, SUBSTRING(hora::VARCHAR,1,8) hora ";
     console.log('BODY: ',req.body);
     console.log('URL: ',req.params);
@@ -112,7 +144,7 @@ var pediInsert =  function(req, res) {
                    + "VALUES " + sql + " "
                    + "RETURNING id_pedido_producto; "
           }
-          query1+= "UPDATE pedidos SET estado='enviado' WHERE id_pedido='"+row.id_pedido+"' RETURNING id_pedido; "
+          query1+= "UPDATE pedidos SET estado='registrado' WHERE id_pedido='"+row.id_pedido+"' RETURNING id_pedido; "
           console.log('SQL:',query1);
           query1 = client.query(query1, function(err, result){
             if(err) {
@@ -244,6 +276,7 @@ var pediDelete =  function(req, res) {
 }
 
 exports.list = pediList;
+exports.listTo = pediListTo;
 //exports.info = prodInfo;
 exports.add = pediInsert;
 //exports.modif = prodUpdate;
