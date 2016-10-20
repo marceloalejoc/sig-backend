@@ -28,14 +28,14 @@ var list = function(req, res) {
   usuarios_json(req, res);
 }
 
-/* GET /api/v1/usuarios/:usuario/info */
+/* POST /api/v1/usuarios/:usuario/info */
 var info = function(req, res) {
   var informacion_json = function(req, res) {
     client = new pg.Client(config.app.db);
     client.on('drain', client.end.bind(client)); //disconnect client when all queries are finished
     client.connect();
 
-    query = "SELECT usuario,nombre,ap_paterno,ap_materno, img,email,descripcion, dia,mes,ano,siglas,empresa "
+    query = "SELECT id_usuario+1983 id_usuario,usuario,nombre,ap_paterno,ap_materno, img,email,descripcion, dia,mes,ano,siglas,empresa , nivel::VARCHAR "
           + ",SUBSTRING(fecha::VARCHAR,1,10) fecha, SUBSTRING(hora::VARCHAR,1,8) hora  "
           + "FROM usuarios "
           + "WHERE usuario='" + req.params.user + "' ";
@@ -114,7 +114,7 @@ var login =  function(req, res) {
               res.json({'status':'501'});
             } else {
               row2 = result.rows[0];
-              console.log('DEBUG', row2);
+              //console.log('DEBUG', row2);
               if(row2) {
                 console.error('Usuarios respuesta en formato JSON');
                 row2.status = '200';
@@ -122,8 +122,8 @@ var login =  function(req, res) {
               } else {
                 var datos = [req.params.user, req.body.iddisp, 'Usuario','Dispositivo','Autoregistrado'];
                 query = "INSERT INTO usuarios "
-                      + "(usuario,id_dispositivo,nombre,ap_paterno,ap_materno) "
-                      + "VALUES ($1,$2,$3,$4,$5) "
+                      + "(usuario,id_dispositivo,nombre,ap_paterno,ap_materno, fecha,hora, nivel ) "
+                      + "VALUES ($1,$2,$3,$4,$5, TO_CHAR(NOW(),'YYYY-MM-DD')::DATE, TO_CHAR(NOW(),'HH24:MI:SS')::TIME , 100) "
                       + "RETURNING id_usuario+1983 id_usuario,usuario,nombre,ap_paterno,ap_materno,MD5(id_dispositivo) id ,img "
                 query = client.query(query, datos, function(err, result){
                   if(err) {
@@ -214,15 +214,15 @@ var register =  function(req, res) {
         res.json(row);
       } else {
         var datos = [req.body.usuario, req.body.password,
-                     req.body.nombre, req.body.appaterno, req.body.apmaterno,
-                     req.body.iddisp,
-                     req.body.negocio, req.body.email,
+                     req.body.nombre, req.body.appaterno, req.body.apmaterno, // $5
+                     req.body.iddisp, req.body.descripcion, req.body.siglas, req.body.email, // $9
                      req.body.dia, req.body.mes, req.body.ano,
-                     req.body.latlng[0], req.body.latlng[1]];
+                     req.body.latlng[0], req.body.latlng[1], // $14
+                     req.body.tipo];
         query2 = "INSERT INTO usuarios "
-               + "(usuario,contrasena,nombre,ap_paterno,ap_materno,id_dispositivo, descripcion,email,dia,mes,ano,lat,lng) "
-               + "VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, $12,$13) "
-               + "RETURNING id_usuario+1983 id_usuario, usuario, id_dispositivo id ";
+               + "(usuario,contrasena,nombre,ap_paterno,ap_materno,id_dispositivo, descripcion,siglas,email,dia,mes,ano, lat,lng, nivel, fecha,hora) "
+               + "VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12, $13,$14, $15, TO_CHAR(NOW(),'YYYY-MM-DD')::DATE, TO_CHAR(NOW(),'HH24:MI:SS')::TIME)\n"
+               + "RETURNING id_usuario+1983 id_usuario, usuario, id_dispositivo id;\n";
         query2 = client.query(query2, datos, function(err, result){
           if(err) {
             client.end(function (err) { if (err) throw err; }); // disconnect the client
@@ -244,6 +244,54 @@ var register =  function(req, res) {
   });
 
 }
+
+
+/* PUT /api/v1/usuarios/:user/:iduser */
+var update =  function(req, res) {
+  var row = null;
+
+  client = new pg.Client(config.app.db);
+  //client.on('drain', client.end.bind(client)); //disconnect client when all queries are finished
+  client.connect();
+
+    req.body.iddisp=req.body.iddisp?req.body.iddisp:null;
+
+    var datos = [req.body.usuario, req.body.contras,
+                 req.body.nombre, req.body.ap_paterno, req.body.ap_materno, // $5
+                 req.body.img, req.body.descripcion, req.body.siglas, req.body.email, // $9
+                 req.body.dia, req.body.mes, req.body.ano, // $12
+                 req.body.nivel];
+
+    query = "UPDATE usuarios \n"
+          + "SET usuario=$1,contrasena=$2,nombre=$3,ap_paterno=$4,ap_materno=$5, img=$6, descripcion=$7,siglas=$8,email=$9 "
+          + ",dia=$10,mes=$11,ano=$12, nivel=$13 "
+          + ",fecha=TO_CHAR(NOW(),'YYYY-MM-DD')::DATE, hora=TO_CHAR(NOW(),'HH24:MI:SS')::TIME\n";
+    query+= "WHERE id_usuario+1983='"+req.body.id_usuario+"' AND nivel!=100 \n"
+          + "RETURNING id_usuario+1983 id_usuario, usuario;\n";
+
+    query = client.query(query, datos, function(err, result){
+      if(err) {
+        client.end(function (err) { if (err) throw err; }); // disconnect the client
+        console.error('Error ejecutando insert: ', err);
+        row = {status:500};
+      } else {
+
+        if(result.rows[0]) {
+          row = result.rows[0];
+          row.status=200;
+        } else {
+          row = {status:304}
+        }
+      }
+      // disconnect the client
+      client.end(function (err) {
+        if (err) throw err;
+      });
+      res.json(row);
+    });
+
+}
+
 
 
 /* POST /api/v1/usuarios/login/:usuario */
@@ -318,3 +366,4 @@ exports.list = list;
 exports.info = info;
 exports.login = login;
 exports.register = register;
+exports.update = update;
