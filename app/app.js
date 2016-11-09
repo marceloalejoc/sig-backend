@@ -30,10 +30,20 @@ app.use(require('stylus').middleware({
 // Enable CORS for express: http://stackoverflow.com/a/11182153/1174245
 app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "X-Requested-With, Content-Type, Accept");
+  res.header("Access-Control-Allow-Headers", "X-Requested-With, Content-Type, Accept, Authorization");
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
   //res.header("Access-Control-Allow-Headers", "*");
   res.header("Accept", "application/json, text/plain, */*");
+  if(req.header('Authorization')) {
+    //var mid = req.header('Authorization').substr(7);
+    var mid = req.header('Authorization').split(';');
+    req.user = {
+      dispid: mid[1]||1983,
+      userid: mid[2]||0,
+      user: mid[3]||'',
+      time: mid[4]||-999999
+    }
+  }
   next();
 });
 app.use(express.static(path.join(__dirname, 'public')));

@@ -12,15 +12,15 @@ var groupList = function(req, res) {
     query = "SELECT ni.id_nivel+1983 id_nivel,ni.nombre nomnivel \n"
           + ",us.id_usuario+1983 id_usuario, us.usuario, MD5(id_dispositivo) id_dispositivo, us.nombre, ap_paterno,ap_materno \n"
           + ", SUBSTRING(us.fecha::VARCHAR,1,10) fecha, SUBSTRING(us.hora::VARCHAR,1,8) hora \n"
-          + ",us.nivel  \n"
+          + ",us.img, us.nivel  \n"
           + "FROM usuarios us \n"
-          + "JOIN niveles ni ON ni.id_nivel=us.nivel \n"
+          + "JOIN niveles ni ON ni.nivel=us.nivel \n"
           + "WHERE us.nivel>1 AND lat IS NOT NULL AND lng IS NOT NULL \n"
           + "UNION \n"
           + "SELECT ni.id_nivel+1983 id_nivel,ni.nombre nomnivel \n"
           + ",us.id_usuario+1983 id_usuario, us.usuario, MD5(id_dispositivo) id_dispositivo, us.nombre, ap_paterno,ap_materno \n"
           + ", SUBSTRING(us.fecha::VARCHAR,1,10) fecha, SUBSTRING(us.hora::VARCHAR,1,8) hora \n"
-          + ",us.nivel  \n"
+          + ",us.img, us.nivel  \n"
           + "FROM usuarios us \n"
           + "JOIN niveles ni ON ni.id_nivel=us.nivel \n"
           + "WHERE us.nivel=1 AND 1=(SELECT nivel FROM usuarios WHERE id_usuario+1983='"+req.params.userid+"') \n"
@@ -44,6 +44,7 @@ var groupList = function(req, res) {
             ap_materno: o.ap_materno,
             fecha: o.fecha,
             hora: o.hora,
+            img: o.img
           };
           if(rows.length>0 && rows[rows.length-1].id_nivel==o.id_nivel) {
             rows[rows.length-1].usuarios.push(user);

@@ -12,9 +12,11 @@ var pediList = function(req, res) {
     query = "SELECT pe.id_pedido+1983 id_pedido, pe.estado,pe.detalle,pe.lat,pe.lng  "
           + ", SUBSTRING(pe.fecha::VARCHAR,1,10) fecha, SUBSTRING(pe.hora::VARCHAR,1,8) hora "
           + ", us.id_usuario+1983 id_usuario2, us.usuario usuario2 "
+          + ", u2.id_usuario+1983 id_usuarioR, u2.usuario usuarioR, MD5(u2.id_dispositivo) id_dispR, u2.lat uLat, u2.lng uLng "
           + "FROM pedidos pe "
-          + "JOIN usuarios us ON us.id_usuario=pe.id_usuario2  "
-          + "WHERE pe.id_usuario1+1983='"+ req.params.userid +"' "
+          + "JOIN usuarios us ON us.id_usuario=pe.id_empresa  "
+          + "JOIN usuarios u2 ON u2.id_usuario=pe.id_repartidor  "
+          + "WHERE pe.id_cliente+1983='"+ req.params.userid +"' "
           + "ORDER BY fecha DESC,hora DESC ";
     //console.log('BODY',req.body);
     query = client.query(query, function(err, result){
@@ -44,8 +46,8 @@ var pediListTo = function(req, res) {
           + ", SUBSTRING(pe.fecha::VARCHAR,1,10) fecha, SUBSTRING(pe.hora::VARCHAR,1,8) hora "
           + ", us.id_usuario+1983 id_usuario1, us.usuario usuario1 "
           + "FROM pedidos pe "
-          + "JOIN usuarios us ON us.id_usuario=pe.id_usuario1  "
-          + "WHERE pe.id_usuario2+1983='"+ req.params.userid +"' "
+          + "JOIN usuarios us ON us.id_usuario=pe.id_cliente  "
+          + "WHERE pe.id_empresa+1983='"+ req.params.userid +"' "
           + "ORDER BY fecha DESC,hora DESC ";
     //console.log('BODY',req.body);
     query = client.query(query, function(err, result){
@@ -112,10 +114,12 @@ var pediInsert =  function(req, res) {
     //client.on('drain', client.end.bind(client)); //disconnect client when all queries are finished
     client.connect();
 
-    var datos = [req.body.id-1983, req.body.pedido.user.id_usuario-1983, req.body.detalles, req.body.lat, req.body.lng, req.body.nombres,req.body.email,req.body.direccion];
+    var datos = [req.body.id-1983, req.body.pedido.user.id_usuario-1983, req.body.pedido.user.id_usuario-1983,
+                 req.body.detalles, req.body.nombres, req.body.email, req.body.direccion,
+                 req.body.lat, req.body.lng ];
     query = "INSERT INTO pedidos "
-          + "(id_usuario1,id_usuario2,detalle,lat,lng, nombres,email,direccion, fecha,hora) "
-          + "VALUES ($1,$2,$3, $4,$5, $6,$7,$8, TO_CHAR(NOW(),'YYYY-MM-DD')::DATE, TO_CHAR(NOW(),'HH24:MI:SS')::TIME) "
+          + "(id_cliente,id_empresa,id_repartidor, detalle,nombres,email,direccion, lat,lng,fecha,hora) "
+          + "VALUES ($1,$2,$3, $4,$5,$6,$7, $8,$9, TO_CHAR(NOW(),'YYYY-MM-DD')::DATE, TO_CHAR(NOW(),'HH24:MI:SS')::TIME) "
           + "RETURNING id_pedido, SUBSTRING(fecha::VARCHAR,1,10) fecha, SUBSTRING(hora::VARCHAR,1,8) hora ";
     console.log('BODY: ',req.body);
     console.log('URL: ',req.params);
@@ -275,6 +279,82 @@ var pediDelete =  function(req, res) {
   delete_json(req, res);
 }
 
+
+var pediDetalle = function(req, res) {
+  var row = {};
+
+  var detalle_json = function(req, res) {
+    client = new pg.Client(config.app.db);
+    //client.on('drain', client.end.bind(client)); //disconnect client when all queries are finished
+    client.connect();
+
+    var datos = [req.params.userid, req.params.pedid];
+    query = "SELECT pe.id_pedido+1983 id_pedido, pe.nombres, pe.email, pe.direccion, pe.detalle, pe.estado\n"
+          + ",u1.usuario de,u2.usuario para\n"
+          + ",ps.codigo,ps.nombre producto,pp.precio,pp.cantidad\n"
+          + "FROM pedidos pe\n"
+          + "JOIN usuarios u1 ON u1.id_usuario=pe.id_cliente\n"
+          + "JOIN usuarios u2 ON u2.id_usuario=pe.id_empresa\n"
+          + "LEFT JOIN pedido_productos pp ON pp.id_pedido=pe.id_pedido\n"
+          + "LEFT JOIN productos ps ON ps.id_producto=pp.id_producto\n"
+          + "WHERE pe.id_pedido+1983=$2 AND pe.id_cliente+1983=$1 "
+          + "ORDER BY pe.fecha ";
+    console.log('BODY: ',req.body);
+    query = client.query(query, datos, function(err, result){
+      var row = {};
+      res.set('content-type', 'application/json; charset=UTF-8');
+      client.end(function (err) { if (err) throw err; }); // disconnect the client
+      if(err) {
+        console.error('Error ejecutando consulta: ', err);
+        row = {status:'500'};
+        res.json(row);
+      } else {
+        console.log('Producto delete respuesta en formato JSON');
+        var row = result.rows[0];
+        if(row && row.id_pedido) {
+          var rows = {};
+          result.rows.forEach(function(o,i){
+            var producto = {
+              codigo: o.codigo,
+              producto: o.producto,
+              precio: o.precio,
+              cantidad: o.cantidad,
+            };
+            if(rows.id_pedido && rows.id_pedido==o.id_pedido) {
+              rows.total+=producto.precio*producto.cantidad;
+              rows.productos.push(producto);
+            } else {
+              rows = {
+                id_pedido: o.id_pedido,
+                nombres: o.nombres,
+                email: o.email,
+                direccion: o.direccion,
+                detalle: o.detalle,
+                de: o.de,
+                para: o.para,
+                estado: o.estado,
+                total: 0,
+                productos: []
+              };
+              if(producto.codigo) {
+                rows.total+=producto.precio*producto.cantidad;
+                rows.productos.push(producto);
+              }
+            }
+          });
+          rows.status = '200';
+          res.json(rows);
+        } else {
+          row = {status:'403'};
+          res.json(row);
+        }
+      }
+    });
+  }
+
+  detalle_json(req, res);
+}
+
 exports.list = pediList;
 exports.listTo = pediListTo;
 //exports.info = prodInfo;
@@ -282,3 +362,5 @@ exports.add = pediInsert;
 //exports.modif = prodUpdate;
 //exports.delete = prodDelete;
 exports.cancel = pediDelete;
+
+exports.detalle = pediDetalle;

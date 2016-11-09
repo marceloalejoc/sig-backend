@@ -173,7 +173,7 @@ var recibirUser = function(req, res) {
             res.json({'status':'500'});
           } else {
             client.end(function (err) { if (err) throw err; }); // disconnect the client
-            //console.log(result.rows);
+            //console.log('MENSAJES: ',result.rows);
             console.log('Mensajes respuesta en formato JSON');
             res.json(result.rows);
           }
