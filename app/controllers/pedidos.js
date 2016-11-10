@@ -79,7 +79,7 @@ var prodInfo = function(req, res) {
           + "JOIN usuarios u ON u.id_usuario=p.id_usuario "
           + "WHERE id_producto='"+ req.params.prodid +"' "
           + "ORDER BY fecha DESC,hora DESC ";
-    console.log('BODY: ',req.body);
+    //console.log('BODY: ',req.body);
     query = client.query(query, function(err, result){
       var row = {};
       res.set('content-type', 'application/json; charset=UTF-8');
@@ -121,8 +121,6 @@ var pediInsert =  function(req, res) {
           + "(id_cliente,id_empresa,id_repartidor, detalle,nombres,email,direccion, lat,lng,fecha,hora) "
           + "VALUES ($1,$2,$3, $4,$5,$6,$7, $8,$9, TO_CHAR(NOW(),'YYYY-MM-DD')::DATE, TO_CHAR(NOW(),'HH24:MI:SS')::TIME) "
           + "RETURNING id_pedido, SUBSTRING(fecha::VARCHAR,1,10) fecha, SUBSTRING(hora::VARCHAR,1,8) hora ";
-    console.log('BODY: ',req.body);
-    console.log('URL: ',req.params);
 
     query = client.query(query, datos, function(err, result){
       var row = {};
@@ -149,7 +147,6 @@ var pediInsert =  function(req, res) {
                    + "RETURNING id_pedido_producto; "
           }
           query1+= "UPDATE pedidos SET estado='registrado' WHERE id_pedido='"+row.id_pedido+"' RETURNING id_pedido; "
-          console.log('SQL:',query1);
           query1 = client.query(query1, function(err, result){
             if(err) {
               client.end(function (err) { if (err) throw err; }); // disconnect the client
@@ -186,6 +183,115 @@ var pediInsert =  function(req, res) {
 }
 
 
+
+var getKilometros = function(latlng1,latlng2) {
+  var lat1 = latlng1[0];
+  var lon1 = latlng1[1];
+  var lat2 = latlng2[0];
+  var lon2 = latlng2[1];
+  var rad = function(x) {return x*Math.PI/180;}
+  var R = 6378.137; //Radio de la tierra en km
+  var dLat = rad( lat2 - lat1 );
+  var dLong = rad( lon2 - lon1 );
+  var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(dLong/2) * Math.sin(dLong/2);
+  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  var d = R * c;
+  return d.toFixed(3); //Retorna tres decimales
+}
+
+/* PUT /api/v1/pedidos/:user/entrega/:pedid */
+var pediEntrega =  function(req, res) {
+  var row = {};
+
+  var update_json = function(req, res) {
+    var d = getKilometros(req.body.latlng,[req.body.pedido.lat,req.body.pedido.lng]);
+    console.log('DIST',d*1000, 'm')
+    if(d*1000>50) {
+      res.json({dnum:d*1000,dlit:'metros',status:201});
+      return;
+    }
+    client = new pg.Client(config.app.db);
+    //client.on('drain', client.end.bind(client)); //disconnect client when all queries are finished
+    client.connect();
+
+    var datos = ['entregado']; //, req.body.lat, req.body.lng];
+    query = "UPDATE pedidos "
+          + "SET estado=$1 " //", lat=$2, lng=$3 "
+          + ",fecha=TO_CHAR(NOW(),'YYYY-MM-DD')::DATE, hora=TO_CHAR(NOW(),'HH24:MI:SS')::TIME "
+          + "WHERE id_pedido+1983='"+req.body.pedido.id_pedido+"' "
+          + "RETURNING id_pedido, '"+req.body.i+"' i ";
+    query = client.query(query, datos, function(err, result){
+      var row = {};
+      res.set('content-type', 'application/json; charset=UTF-8');
+      client.end(function (err) { if (err) throw err; }); // disconnect the client
+      if(err) {
+        console.error('Error ejecutando consulta: ', err);
+        row = {status:'500'};
+        res.json(row);
+      } else {
+        console.log('Pedido update respuesta en formato JSON');
+        var row = result.rows[0];
+        if(row && row.id_pedido) {
+          row.status = '200';
+          res.json(row);
+        } else {
+          row = {status:'403'};
+          res.json(row);
+        }
+      }
+    });
+  }
+
+  update_json(req, res);
+}
+
+/* PUT /api/v1/pedidos/:user/recibe/:pedid */
+var pediRecibe =  function(req, res) {
+  var row = {};
+
+  var update_json = function(req, res) {
+    var d = getKilometros(req.body.latlng,[req.body.pedido.lat,req.body.pedido.lng]);
+    console.log('DIST',d*1000, 'm')
+    if(d*1000>50) {
+      res.json({dnum:d*1000,dlit:'metros',status:201});
+      return;
+    }
+    client = new pg.Client(config.app.db);
+    //client.on('drain', client.end.bind(client)); //disconnect client when all queries are finished
+    client.connect();
+
+    var datos = ['recibido']; //, req.body.lat, req.body.lng];
+    query = "UPDATE pedidos "
+          + "SET estado=$1 " //", lat=$2, lng=$3 "
+          + ",fecha=TO_CHAR(NOW(),'YYYY-MM-DD')::DATE, hora=TO_CHAR(NOW(),'HH24:MI:SS')::TIME "
+          + "WHERE id_pedido+1983='"+req.body.pedido.id_pedido+"' "
+          + "RETURNING id_pedido, '"+req.body.i+"' i ";
+    query = client.query(query, datos, function(err, result){
+      var row = {};
+      res.set('content-type', 'application/json; charset=UTF-8');
+      client.end(function (err) { if (err) throw err; }); // disconnect the client
+      if(err) {
+        console.error('Error ejecutando consulta: ', err);
+        row = {status:'500'};
+        res.json(row);
+      } else {
+        console.log('Pedido update respuesta en formato JSON');
+        var row = result.rows[0];
+        if(row && row.id_pedido) {
+          row.status = '200';
+          res.json(row);
+        } else {
+          row = {status:'403'};
+          res.json(row);
+        }
+      }
+    });
+  }
+
+  update_json(req, res);
+}
+
+
 /* PUT /api/v1/pedidos/:user/:prodid */
 var pediUpdate =  function(req, res) {
   var row = {};
@@ -201,7 +307,7 @@ var pediUpdate =  function(req, res) {
           + ",fecha=TO_CHAR(NOW(),'YYYY-MM-DD')::DATE, hora=TO_CHAR(NOW(),'HH24:MI:SS')::TIME "
           + "WHERE id_pedido='"+req.params.pedid+"' "
           + "RETURNING id_pedido, '"+req.body.i+"' i ";
-    console.log('BODY: ',req.body, req.params);
+    //console.log('BODY: ',req.body, req.params);
     query = client.query(query, datos, function(err, result){
       var row = {};
       res.set('content-type', 'application/json; charset=UTF-8');
@@ -253,7 +359,7 @@ var pediDelete =  function(req, res) {
           + "SET estado='eliminado' "
           + "WHERE id_pedido+1983=$1 "
           + "RETURNING id_producto, '"+req.body.i+"' i ";
-    console.log('BODY: ',req.body);
+    //console.log('BODY: ',req.body);
     query = client.query(query, datos, function(err, result){
       var row = {};
       res.set('content-type', 'application/json; charset=UTF-8');
@@ -299,7 +405,7 @@ var pediDetalle = function(req, res) {
           + "LEFT JOIN productos ps ON ps.id_producto=pp.id_producto\n"
           + "WHERE pe.id_pedido+1983=$2 AND pe.id_cliente+1983=$1 "
           + "ORDER BY pe.fecha ";
-    console.log('BODY: ',req.body);
+    //console.log('BODY: ',req.body);
     query = client.query(query, datos, function(err, result){
       var row = {};
       res.set('content-type', 'application/json; charset=UTF-8');
@@ -359,6 +465,8 @@ exports.list = pediList;
 exports.listTo = pediListTo;
 //exports.info = prodInfo;
 exports.add = pediInsert;
+exports.entrega = pediEntrega;
+exports.recibe = pediRecibe;
 //exports.modif = prodUpdate;
 //exports.delete = prodDelete;
 exports.cancel = pediDelete;

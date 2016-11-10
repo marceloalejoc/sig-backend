@@ -56,6 +56,8 @@ router.get('/pedidos/:userid/info/:pedid',pedidos.detalle);
 router.get('/pedidos/:user/:userid',pedidos.list);
 router.get('/pedidos/:user/to/:userid',pedidos.listTo);
 router.post('/pedidos/:user',pedidos.add);
+router.put('/pedidos/:user/entrega/:pedid',pedidos.entrega);
+router.put('/pedidos/:user/recibe/:pedid',pedidos.recibe);
 router.delete('/pedidos/:user/:pedid',pedidos.cancel);
 
 //
