@@ -128,6 +128,7 @@ CREATE TABLE productos (
   cantidad INTEGER,
   fecha DATE,
   hora TIME,
+  estado VARCHAR(32),
   CONSTRAINT productos_pkey PRIMARY KEY (id_producto)
 );
 ALTER TABLE productos

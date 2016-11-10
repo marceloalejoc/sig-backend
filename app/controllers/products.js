@@ -13,7 +13,7 @@ var prodList = function(req, res) {
           + ", SUBSTRING(p.fecha::VARCHAR,1,10) fecha, SUBSTRING(p.hora::VARCHAR,1,8) hora "
           + "FROM productos p "
           + "JOIN usuarios u ON u.id_usuario=p.id_usuario "
-          + "WHERE p.id_usuario+1983='"+ req.params.userid +"' "
+          + "WHERE p.id_usuario+1983='"+ req.params.userid +"' AND estado IS NULL "
           + "ORDER BY fecha DESC,hora DESC ";
     //console.log('BODY',req.body);
     query = client.query(query, function(err, result){
@@ -185,7 +185,11 @@ var prodDelete =  function(req, res) {
     client.connect();
 
     var datos = [req.params.prodid];
-    query = "DELETE FROM productos "
+    //query = "DELETE FROM productos "
+    //      + "WHERE id_producto+1983=$1 "
+    //      + "RETURNING id_producto, '"+req.body.i+"' i ";
+    query = "UPDATE productos "
+          + "SET estado='eliminado' "
           + "WHERE id_producto+1983=$1 "
           + "RETURNING id_producto, '"+req.body.i+"' i ";
     console.log('BODY: ',req.body);
