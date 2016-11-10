@@ -17,7 +17,7 @@ var groupList = function(req, res) {
           + ",(SELECT COUNT(*) FROM productos pr WHERE pr.id_usuario=us.id_usuario) nprod  \n"
           + "FROM usuarios us \n"
           + "JOIN niveles ni ON ni.nivel=us.nivel \n"
-          + "WHERE us.nivel>1 AND lat IS NOT NULL AND lng IS NOT NULL \n"
+          + "WHERE us.nivel>1 AND lat IS NOT NULL AND lng IS NOT NULL AND us.id_usuario+1983!='"+req.params.userid+"' \n"
           + "UNION \n"
           + "SELECT ni.id_nivel+1983 id_nivel,ni.nombre nomnivel \n"
           + ",us.id_usuario+1983 id_usuario, us.usuario, MD5(id_dispositivo) id_dispositivo, us.nombre, ap_paterno,ap_materno \n"
@@ -25,7 +25,7 @@ var groupList = function(req, res) {
           + ",us.img, us.nivel, 0 npedi, 0 nprod \n"
           + "FROM usuarios us \n"
           + "JOIN niveles ni ON ni.id_nivel=us.nivel \n"
-          + "WHERE us.nivel=1 AND 1=(SELECT nivel FROM usuarios WHERE id_usuario+1983='"+req.params.userid+"') \n"
+          + "WHERE us.nivel=1 AND 1=(SELECT nivel FROM usuarios WHERE id_usuario+1983='"+req.params.userid+"') AND us.id_usuario+1983!='"+req.params.userid+"' \n"
           + "ORDER BY nivel, fecha DESC, hora DESC; ";
     //console.log('BODY: ',query);
     query = client.query(query, function(err, result){
@@ -113,7 +113,7 @@ var prodInfo = function(req, res) {
           + "JOIN usuarios u ON u.id_usuario=p.id_usuario "
           + "WHERE id_producto='"+ req.params.prodid +"' "
           + "ORDER BY fecha DESC,hora DESC ";
-    console.log('BODY: ',req.body);
+    //console.log('BODY: ',req.body);
     query = client.query(query, function(err, result){
       var row = {};
       res.set('content-type', 'application/json; charset=UTF-8');
@@ -153,8 +153,6 @@ var pediInsert =  function(req, res) {
           + "(id_usuario1,id_usuario2,detalle,lat,lng, nombres,email,direccion, fecha,hora) "
           + "VALUES ($1,$2,$3, $4,$5, $6,$7,$8, TO_CHAR(NOW(),'YYYY-MM-DD')::DATE, TO_CHAR(NOW(),'HH24:MI:SS')::TIME) "
           + "RETURNING id_pedido, SUBSTRING(fecha::VARCHAR,1,10) fecha, SUBSTRING(hora::VARCHAR,1,8) hora ";
-    console.log('BODY: ',req.body);
-    console.log('URL: ',req.params);
 
     query = client.query(query, datos, function(err, result){
       var row = {};
@@ -181,7 +179,6 @@ var pediInsert =  function(req, res) {
                    + "RETURNING id_pedido_producto; "
           }
           query1+= "UPDATE pedidos SET estado='registrado' WHERE id_pedido='"+row.id_pedido+"' RETURNING id_pedido; "
-          console.log('SQL:',query1);
           query1 = client.query(query1, function(err, result){
             if(err) {
               client.end(function (err) { if (err) throw err; }); // disconnect the client
@@ -233,7 +230,6 @@ var pediUpdate =  function(req, res) {
           + ",fecha=TO_CHAR(NOW(),'YYYY-MM-DD')::DATE, hora=TO_CHAR(NOW(),'HH24:MI:SS')::TIME "
           + "WHERE id_pedido='"+req.params.pedid+"' "
           + "RETURNING id_pedido, '"+req.body.i+"' i ";
-    console.log('BODY: ',req.body, req.params);
     query = client.query(query, datos, function(err, result){
       var row = {};
       res.set('content-type', 'application/json; charset=UTF-8');
@@ -285,7 +281,6 @@ var pediDelete =  function(req, res) {
           + "SET estado='eliminado' "
           + "WHERE id_pedido+1983=$1 "
           + "RETURNING id_producto, '"+req.body.i+"' i ";
-    console.log('BODY: ',req.body);
     query = client.query(query, datos, function(err, result){
       var row = {};
       res.set('content-type', 'application/json; charset=UTF-8');
