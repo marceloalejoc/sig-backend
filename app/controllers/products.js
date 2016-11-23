@@ -9,7 +9,7 @@ var prodList = function(req, res) {
     //client.on('drain', client.end.bind(client)); //disconnect client when all queries are finished
     client.connect();
 
-    query = "SELECT p.id_producto+1983 id_producto, p.codigo,p.nombre, p.precio,p.cantidad ,p.detalle "
+    query = "SELECT p.id_producto+1983 id_producto, p.codigo,p.nombre, p.precio,p.cantidad ,p.detalle, p.imagen "
           + ", SUBSTRING(p.fecha::VARCHAR,1,10) fecha, SUBSTRING(p.hora::VARCHAR,1,8) hora "
           + "FROM productos p "
           + "JOIN usuarios u ON u.id_usuario=p.id_usuario "
@@ -39,7 +39,7 @@ var prodInfo = function(req, res) {
     //client.on('drain', client.end.bind(client)); //disconnect client when all queries are finished
     client.connect();
 
-    query = "SELECT p.id_producto+1983 id_producto, p.codigo,p.nombre, SUBSTRING(p.fecha::VARCHAR,1,10) fecha, SUBSTRING(p.hora::VARCHAR,1,8) hora "
+    query = "SELECT p.id_producto+1983 id_producto, p.codigo,p.nombre,p.imagen, SUBSTRING(p.fecha::VARCHAR,1,10) fecha, SUBSTRING(p.hora::VARCHAR,1,8) hora "
           //+ ",SUBSTRING(fecha::VARCHAR,1,10) fecha, SUBSTRING(hora::VARCHAR,1,8) hora  "
           + "FROM productos p "
           + "JOIN usuarios u ON u.id_usuario=p.id_usuario "
@@ -80,10 +80,10 @@ var prodInsert =  function(req, res) {
     //client.on('drain', client.end.bind(client)); //disconnect client when all queries are finished
     client.connect();
 
-    var datos = [req.body.id_usuario-1983, req.body.codigo, req.body.nombre, req.body.detalle, req.body.precio, req.body.cant];
+    var datos = [req.body.id_usuario-1983, req.body.codigo, req.body.nombre, req.body.detalle, req.body.precio, req.body.cant,req.body.imagen];
     query = "INSERT INTO productos "
-          + "(id_usuario,codigo,nombre,detalle,precio,cantidad,fecha,hora) "
-          + "VALUES ($1,$2,$3,$4,$5,$6, TO_CHAR(NOW(),'YYYY-MM-DD')::DATE, TO_CHAR(NOW(),'HH24:MI:SS')::TIME) "
+          + "(id_usuario,codigo,nombre,detalle,precio,cantidad,imagen,fecha,hora) "
+          + "VALUES ($1,$2,$3,$4,$5,$6,$7, TO_CHAR(NOW(),'YYYY-MM-DD')::DATE, TO_CHAR(NOW(),'HH24:MI:SS')::TIME) "
           + "RETURNING id_producto, SUBSTRING(fecha::VARCHAR,1,10) fecha, SUBSTRING(hora::VARCHAR,1,8) hora ";
     console.log('BODY: ',req.body);
     console.log('URL: ',req.params);
@@ -131,9 +131,9 @@ var prodUpdate =  function(req, res) {
     //client.on('drain', client.end.bind(client)); //disconnect client when all queries are finished
     client.connect();
 
-    var datos = [req.body.id_usuario, req.body.codigo, req.body.nombre, req.body.detalle, req.body.precio, req.body.cant];
+    var datos = [req.body.id_usuario, req.body.codigo, req.body.nombre, req.body.detalle, req.body.precio, req.body.cant, req.body.imagen];
     query = "UPDATE productos "
-          + "SET id_usuario=$1, codigo=$2, nombre=$3, detalle=$4, precio=$5, cantidad=$6 "
+          + "SET id_usuario=$1, codigo=$2, nombre=$3, detalle=$4, precio=$5, cantidad=$6, imagen=$7 "
           + ",fecha=TO_CHAR(NOW(),'YYYY-MM-DD')::DATE, hora=TO_CHAR(NOW(),'HH24:MI:SS')::TIME "
           + "WHERE id_producto='"+req.params.prodid+"' "
           + "RETURNING id_producto, '"+req.body.i+"' i ";

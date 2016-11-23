@@ -126,6 +126,7 @@ CREATE TABLE productos (
   detalle VARCHAR(256),
   precio DOUBLE PRECISION,
   cantidad INTEGER,
+  imagen VARCHAR(256),
   fecha DATE,
   hora TIME,
   estado VARCHAR(32),
