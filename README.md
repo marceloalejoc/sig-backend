@@ -25,3 +25,8 @@ El dispositivo debe tener las siguientes características:
 ### Instalación
 
 Para realizar la instalación ver archivo [INSTALL.md](INSTALL.md)
+
+
+### Referencias
+
+[Fórmula del Haversine](https://es.wikipedia.org/wiki/F%C3%B3rmula_del_Haversine)
