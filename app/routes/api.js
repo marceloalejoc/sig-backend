@@ -7,6 +7,8 @@ var products = require('../controllers/products');
 var groups = require('../controllers/groups');
 var confia = require('../controllers/confianza');
 
+var feature = require('../controllers/features');
+
 var router = express.Router();
 
 //
@@ -79,5 +81,8 @@ router.post('/confia/:user/:userid',confia.add);
 router.put('/confia/:user/:confid',confia.modif);
 router.delete('/confia/:user/:confid',confia.delete);
 
+
+router.get('/features/:id',feature.get);
+router.post('/features/:userid',feature.lineString);
 
 module.exports = router;
